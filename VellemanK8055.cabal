@@ -19,3 +19,10 @@ library
   -- other-modules:
   build-depends:       base ==4.6.*, usb ==1.1.*, bytestring ==0.10.*,
                        cereal
+
+
+Test-Suite test
+    type:       exitcode-stdio-1.0
+    main-is:    test.hs
+    hs-source-dirs: test
+    build-depends: base, usb, VellemanK8055
