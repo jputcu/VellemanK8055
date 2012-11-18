@@ -5,8 +5,8 @@ VellemanK8055
 Install
 -------
 
-cabal update
-cabal install VellemanK8055
+* cabal update
+* cabal install VellemanK8055
 
 
 
@@ -21,9 +21,9 @@ Bus 002 Device 008: ID 10cf:5500 Velleman Components, Inc. 8055 Experiment Inter
 Tests
 -----
 
-cabal install --enable-tests VellemanK8055
-cabal build
-cabal test
+* cabal install --enable-tests VellemanK8055
+* cabal build
+* cabal test
 
 
 
@@ -31,5 +31,5 @@ References
 ----------
 
 * http://sourceforge.net/projects/libk8055/
-* Predecesor https://github.com/jputcu/bindings-K8055
+* Predecessor https://github.com/jputcu/bindings-K8055
 
