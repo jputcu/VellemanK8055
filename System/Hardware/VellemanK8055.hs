@@ -2,7 +2,7 @@ module System.Hardware.VellemanK8055 where
 
 import           Control.Concurrent
 import           Control.Monad      (void)
-import           Data.Bits          (shift, (.&.))
+import           Data.Bits          (shift, testBit)
 import qualified Data.ByteString    as B
 import           Data.Serialize
 import           Data.Word
@@ -126,11 +126,10 @@ setAllAnalog hd = outputAllAnalog hd 0xff 0xff
 -- Digital stuff
 --
 
-readDigitalChannel:: DeviceHandle -> DigitalChannel -> IO Word8
+readDigitalChannel:: DeviceHandle -> DigitalChannel -> IO Bool
 readDigitalChannel hd ch = do
   (Status dig _ _ _ _ _) <- readData hd
-  let mask = fromIntegral $ shift (fromEnum ch) 1 :: Word8
-  return $ dig .&. mask
+  return $ testBit dig (fromEnum ch)
 
 readAllDigital:: DeviceHandle -> IO Word8
 readAllDigital hd = do
