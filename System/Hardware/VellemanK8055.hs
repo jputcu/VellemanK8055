@@ -2,7 +2,7 @@ module System.Hardware.VellemanK8055 where
 
 import           Control.Concurrent
 import           Control.Monad      (void)
-import           Data.Bits          (shift, testBit)
+import           Data.Bits          (testBit)
 import qualified Data.ByteString    as B
 import           Data.Serialize
 import           Data.Word
