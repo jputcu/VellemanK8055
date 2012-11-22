@@ -17,6 +17,7 @@ cabal-version:       >=1.8
 library
   exposed-modules:     System.Hardware.VellemanK8055
   -- other-modules:
+  ghc-options: -Wall
   build-depends:       base, usb ==1.1.*, bytestring,
                        cereal
 

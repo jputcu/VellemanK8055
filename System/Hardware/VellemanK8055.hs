@@ -1,18 +1,30 @@
 module System.Hardware.VellemanK8055 where
 
+import           Control.Concurrent
+import           Control.Monad      (void)
+import           Data.Bits          (shift, (.&.))
+import qualified Data.ByteString    as B
+import           Data.Serialize
+import           Data.Word
+import           System.USB
 
-import System.USB
-import Data.Word
-import Data.Serialize
-import qualified Data.ByteString as B
-import Control.Concurrent
+data AnalogChannel =  Analog1
+                    | Analog2
 
+data DigitalChannel = Digital1
+                    | Digital2
+                    | Digital3
+                    | Digital4
+                    | Digital5
+                    | Digital6
+                    | Digital7
+                    | Digital8
+                    deriving (Enum)
 
-data Packet =
-    Reset
-  | SetAnalogDigital Word8 Word8 Word8
-  | Status Word8 Word8 Word8 Word8 Word16 Word16
-  deriving Show
+data Packet = Reset
+            | SetAnalogDigital Word8 Word8 Word8
+            | Status Word8 Word8 Word8 Word8 Word16 Word16
+            deriving (Show)
 
 
 instance Serialize Packet where
@@ -47,8 +59,7 @@ writeData :: DeviceHandle -> Packet -> IO ()
 writeData h p =
   let outEndpoint = EndpointAddress 1 Out
       bs = encode p
-  in writeInterrupt h outEndpoint bs 0 >>
-     return ()
+  in void $ writeInterrupt h outEndpoint bs 0
 
 
 readData :: DeviceHandle -> IO Packet
@@ -61,8 +72,7 @@ readData h =
 
 handleK8055 :: (DeviceHandle -> IO ()) -> DeviceHandle -> IO ()
 handleK8055 actions h =
-  let config = 1
-      interface = 0
+  let interface = 0
   in withDetachedKernelDriver h interface ioAction
   where
     ioAction =
@@ -73,7 +83,62 @@ handleK8055 actions h =
 
 
 --
--- Example usage
+-- Analog stuff
+--
+
+readAnalogChannel:: DeviceHandle -> AnalogChannel -> IO Word8
+readAnalogChannel hd ch = do
+  (Status _ a1 a2 _ _ _) <- readData hd
+  return $ case ch of
+              Analog1 -> a1
+              Analog2 -> a2
+
+readAllAnalog:: DeviceHandle -> IO (Word8, Word8)
+readAllAnalog hd = do
+  (Status _ a1 a2 _ _ _) <- readData hd
+  return (a1, a2)
+
+outputAnalogChannel:: DeviceHandle -> AnalogChannel -> Word8 -> IO ()
+outputAnalogChannel hd ch v = do
+  digi <- readAllDigital hd
+  writeData hd $ case ch of
+                    Analog1 -> SetAnalogDigital digi v 0x00
+                    Analog2 -> SetAnalogDigital digi 0x00 v
+
+outputAllAnalog:: DeviceHandle -> Word8 -> Word8 -> IO ()
+outputAllAnalog hd a1 a2 = do
+  digi <- readAllDigital hd
+  writeData hd $ SetAnalogDigital digi a1 a2
+
+clearAnalogChannel:: DeviceHandle -> AnalogChannel -> IO ()
+clearAnalogChannel hd ch = outputAnalogChannel hd ch 0x00
+
+clearAllAnalog:: DeviceHandle -> IO ()
+clearAllAnalog hd = outputAllAnalog hd 0x00 0x00
+
+setAnalogChannel:: DeviceHandle -> AnalogChannel -> IO ()
+setAnalogChannel hd ch = outputAnalogChannel hd ch 0xff
+
+setAllAnalog:: DeviceHandle -> IO ()
+setAllAnalog hd = outputAllAnalog hd 0xff 0xff
+
+--
+-- Digital stuff
+--
+
+readDigitalChannel:: DeviceHandle -> DigitalChannel -> IO Word8
+readDigitalChannel hd ch = do
+  (Status dig _ _ _ _ _) <- readData hd
+  let mask = fromIntegral $ shift (fromEnum ch) 1 :: Word8
+  return $ dig .&. mask
+
+readAllDigital:: DeviceHandle -> IO Word8
+readAllDigital hd = do
+  (Status dig _ _ _ _ _) <- readData hd
+  return dig
+
+--
+-- Misc stuff
 --
 
 resetBoard :: DeviceHandle -> IO ()
@@ -89,16 +154,9 @@ toggleAllDigitalOut h = do
   threadDelay 1000000
   writeData h $ SetAnalogDigital 0x00 0x00 0x00
 
-
-readDigitalIn :: DeviceHandle -> IO Word8
-readDigitalIn h = do
-  (Status dig _ _ _ _ _) <- readData h
-  return dig
-
-
 deviceActions :: DeviceHandle -> IO ()
 deviceActions h =
   resetBoard h >>
   toggleAllDigitalOut h >>
-  readDigitalIn h >>= print
+  readAllDigital h >>= print
 
