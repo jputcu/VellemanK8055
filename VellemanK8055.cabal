@@ -18,7 +18,7 @@ library
   exposed-modules:     System.Hardware.VellemanK8055
   -- other-modules:
   ghc-options: -Wall
-  build-depends:       base, usb ==1.1.*, bytestring,
+  build-depends:       base, usb >= 1.1.0.4, bytestring,
                        cereal
 
 
